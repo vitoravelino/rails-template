@@ -1,0 +1,15 @@
+default: &default
+  pool: <%= ENV.fetch("REDIS_POOL", 5) %>
+  timeout: <%= ENV.fetch("REDIS_TIMEOUT", 5) %>
+
+development:
+  <<: *default
+  host: redis
+  port: 6379
+  password:
+
+production:
+  <<: *default
+  host: <%= ENV["REDIS_HOST"] %>
+  port: <%= ENV["REDIS_PORT"] %>
+  password: <%= ENV["REDIS_PASSWORD"] %>

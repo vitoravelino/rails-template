@@ -1,0 +1,60 @@
+version: "3.2"
+
+services:
+  app:
+    build: .
+    command: bundle exec rails s
+    environment:
+      DATABASE_USER: root
+      DATABASE_PASSWORD: root
+      DATABASE_PORT: 27017
+      DATABASE_HOST: db
+
+      VIRTUAL_HOST: app.dev
+      VIRTUAL_PORT: 4000
+    volumes:
+      - .:/app
+    ports:
+      - 4000:4000
+    depends_on:
+      - mongodb
+      - redis
+
+<% if mysql? %>
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: example
+<% end %>
+
+<% if postgres? %>
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+<% end %>
+
+<% if redis? %>
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+<% end %>
+
+  mailcatcher:
+    restart: on-failure:10
+    image: dockage/mailcatcher:latest
+    ports:
+      - 1080:1080
+      - 1025:1025
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      # - ./certs:/etc/nginx/certs

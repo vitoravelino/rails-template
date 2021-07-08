@@ -1,0 +1,36 @@
+require "dry/system/container"
+require "dry/system/loader/autoloading"
+
+module <%= @app_const_base %>
+  class DrySystemLoader < Dry::System::Loader::Autoloading
+    class << self
+      def call(component, *args)
+        require!(component)
+
+        constant = self.constant(component)
+
+        return constant if constant.ancestors.include?(Micro::Case)
+
+        if singleton?(constant)
+          constant.instance(*args)
+        else
+          constant.new(*args)
+        end
+      end
+    end
+  end
+
+  class Container < Dry::System::Container
+    configure do |config|
+      config.root = Rails.root
+      config.system_dir = "config/system"
+      config.bootable_dirs = ["config/system/boot"]
+
+      config.component_dirs.loader = DrySystemLoader
+      config.component_dirs.add_to_load_path = false
+      config.component_dirs.add("app/models")
+    end
+  end
+end
+
+Deps = <%= @app_const_base %>::Container.injector
